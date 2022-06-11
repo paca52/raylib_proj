@@ -320,7 +320,7 @@ int main(){
                 else if(plati_racune == 1){
                     if(racuni_kraj != NULL || racuni_poc != NULL){
                         
-                        while(racuni_kraj->iznos < kor.stanje && racuni_kraj != NULL && racuni_poc != NULL){
+                        while(racuni_kraj->iznos <= kor.stanje && racuni_kraj != NULL && racuni_poc != NULL){
                             kor.stanje -= racuni_kraj->iznos;
                             suma += racuni_kraj->iznos;
                             izreda(&racuni_poc);
