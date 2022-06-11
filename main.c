@@ -162,7 +162,7 @@ int main(){
     button_prikazi.height /= 2;
     button_prikazi.width /= 2;
 
-    int left_click, mouse_x, mouse_y, menu = 1, dodaj_na_racun = 0;
+    int left_click, mouse_x, mouse_y, menu = 1, dodaj_na_racun = 0, dodaj_stanje = 0, plati_racune = 0, suma = 0, prikazi = 0;
     while(!WindowShouldClose()){
         //update
         //textbox update
@@ -171,11 +171,6 @@ int main(){
             if(IsKeyPressed(KEY_ENTER)){
                 menu = 0;
                 dodaj_na_racun = 2;
-
-                if(len(tip) == 0){
-                    error = 1;
-                    strcpy(error_output, "Tip racuna nije lepo \nunet.");
-                }
             }
             int i=len(tip);
             int key = GetCharPressed();
@@ -201,11 +196,8 @@ int main(){
                 menu = 1;
                 dodaj_na_racun = 0;
 
-                if(len(broj) == 0){
-                    error = 1;
-                    strcpy(error_output, "Iznos racuna nije lepo \nunet.");
-                }
-                ured(&racuni_poc, &racuni_kraj, atoi(broj), tip);
+                if(len(broj) != 0 && len(tip) != 0)
+                    ured(&racuni_poc, &racuni_kraj, atoi(broj), tip);
                 broj[0] = tip[0] = 0;
             }
             int i=len(broj);
@@ -226,6 +218,47 @@ int main(){
                 broj[i] = '\0';
             }
         }
+        else if(dodaj_stanje == 1){
+            if(IsKeyPressed(KEY_ENTER)){
+                menu = 1;
+                dodaj_stanje = 0;
+
+                if(len(broj) != 0)
+                    kor.stanje += atoi(broj);
+                
+                broj[0] = 0;
+            }
+            int i=len(broj);
+            int key = GetCharPressed();
+            while (key > 0)
+            {
+                if ((key >= 48) && (key <= 57) && (i < MAX_INPUT_CHARS)){
+                    broj[i] = (char)key;
+                    broj[i+1] = '\0'; 
+                    i++;
+                }
+                key = GetCharPressed();
+            }
+            if (IsKeyPressed(KEY_BACKSPACE))
+            {
+                i--;
+                if (i < 0) i = 0;
+                broj[i] = '\0';
+            }
+        }
+        else if(plati_racune == 1){
+            if(IsKeyPressed(KEY_ENTER)){
+                menu = 1;
+                plati_racune = 0;
+                suma = 0;
+            }
+        }
+        else if(prikazi == 1){
+            if(IsKeyPressed(KEY_ENTER)){
+                menu = 1;
+                prikazi = 0;
+            }
+        }
         //menu update
         else if(menu == 1){
             left_click = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
@@ -234,9 +267,21 @@ int main(){
             if(error != 1 && left_click == 1){
                 if(mouse_x >= 100 && mouse_x <= 100+538/2 && mouse_y >= 600 && mouse_y <= 600+150/2)
                     break;
-                if(mouse_x >= 100 && mouse_x <= 100+538/2 && mouse_y >= 200 && mouse_y <= 200 + 150/2){
+                else if(mouse_x >= 100 && mouse_x <= 100+538/2 && mouse_y >= 200 && mouse_y <= 200 + 150/2){
                     menu = 0;
                     dodaj_na_racun = 1;
+                }
+                else if(mouse_x >= 100 && mouse_x <= 100+538/2 && mouse_y >= 300 && mouse_y <= 300 + 150/2){
+                    menu = 0;
+                    dodaj_stanje = 1;
+                }
+                else if(mouse_x >= 100 && mouse_x <= 100+538/2 && mouse_y >= 400 && mouse_y <= 400 + 150/2){
+                    menu = 0;
+                    plati_racune = 1;
+                }
+                else if(mouse_x >= 100 && mouse_x <= 100+538/2 && mouse_y >= 500 && mouse_y <= 500 + 150/2){
+                    menu = 0;
+                    prikazi = 1;
                 }
             }
         }
@@ -251,7 +296,7 @@ int main(){
             //nema error-a
             else{
                 if(menu == 1){
-                    DrawText(TextFormat("Trenutno stanje: %d", kor.stanje), 100, 100, 30, WHITE);
+                    DrawText(TextFormat("Trenutno stanje: %d", kor.stanje), 75, 100, 30, WHITE);
                     DrawTexture(button_dodaj_racun, 100, 200, CLITERAL(Color){ 255, 255, 255, 128 });
                     DrawTexture(button_dodaj_na_stanje, 100, 300, CLITERAL(Color){ 255, 255, 255, 128 });
                     
@@ -267,6 +312,30 @@ int main(){
                 else if(dodaj_na_racun == 2){
                     DrawText("Unesite iznos racuna: ", 30, 30, 30, WHITE);
                     DrawText(TextFormat("%s\n", broj), 60, 60, 30, WHITE);
+                }
+                else if(dodaj_stanje == 1){
+                    DrawText("Unesite zeljeni iznos: ", 30, 30, 30, WHITE);
+                    DrawText(TextFormat("%s\n", broj), 60, 60, 30, WHITE);
+                }
+                else if(plati_racune == 1){
+                    if(racuni_kraj != NULL || racuni_poc != NULL){
+                        
+                        while(racuni_kraj->iznos < kor.stanje && racuni_kraj != NULL && racuni_poc != NULL){
+                            kor.stanje -= racuni_kraj->iznos;
+                            suma += racuni_kraj->iznos;
+                            izreda(&racuni_poc);
+                        }
+                    }
+                    DrawText("Svi moguci racuni su placeni.\n", 30, 30, 30, WHITE);
+                    DrawText(TextFormat("Njihov iznos je bio %d", suma), 60, 60, 30, WHITE);
+                }
+                else if(prikazi == 1){
+                    int i = 2;
+                    DrawText("Racuni(tip[iznos]):", 30, 30, 30, WHITE);
+                    for(red *tmp = racuni_poc; tmp != NULL; tmp = tmp->sledeci){
+                        DrawText(TextFormat("%s[%d]", tmp->tip, tmp->iznos), 50, 60*i, 30, WHITE);
+                        i++;
+                    }
                 }
             }
             
