@@ -1,0 +1,1 @@
+type nul > Korisnici.txt | echo ime, prezime, mesto, 123, 1000 > Korisnici.txt
