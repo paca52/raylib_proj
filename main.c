@@ -40,22 +40,23 @@ void ured(red **poc, red **kraj, int iznos, char tip[])
     *kraj = novi;
 }
 
-void izreda(red **poc)
+FILE* izreda(red **poc, FILE *naplaceni)
 {
-    if(*poc == NULL){
-        printf("\nPRAZNO SINE\n"); return;
-    }
+    if(*poc == NULL)
+        return naplaceni;
+    
     if((*poc)->sledeci == NULL){
-        //*c = (*poc)->znak;
+        fprintf(naplaceni, "%s[%d]\n", (*poc)->tip, (*poc)->iznos);
         *poc = NULL;
         free(*poc);
     }
     else{
         red *tmp = *poc;
-        //*c = (*poc)->znak;
+        fprintf(naplaceni, "%s[%d]\n", (*poc)->tip, (*poc)->iznos);
         *poc = (*poc)->sledeci;
         free(tmp);
     }
+    return naplaceni;
 }
 
 void ispis_rac(red *glava){
@@ -80,11 +81,16 @@ int main(){
     char s[101];
     korisnik kor;
     int br = 0, pom;
-    FILE *unos = fopen("Korisnici.txt", "r");
+    FILE *unos = fopen("Korisnici.txt", "r"), *naplaceni = fopen("Naplaceniracuni.txt", "w");
     if(unos == NULL){
         strcpy(error_output, "Nedostaje datoteka \n'Korisnici.txt' u folderu \nprograma ili program \nne moze da je ucita.\n");
         error = 1;
         error_output[92] = '\0';
+    }
+    else if(naplaceni == NULL){
+        strcpy(error_output, "Program nije uspeo \nda napravi datoteku\n'Naplaceniracuni.txt'.");
+        error = 1;
+        error_output[65] = '\0';
     }
     if(!error){
         //unos iz datoteke
@@ -172,22 +178,24 @@ int main(){
                 menu = 0;
                 dodaj_na_racun = 2;
             }
-            int i=len(tip);
-            int key = GetCharPressed();
-            while (key > 0)
-            {
-                if ((key >= 32) && (key <= 125) && (i < MAX_INPUT_CHARS)){
-                    tip[i] = (char)key;
-                    tip[i+1] = '\0'; 
-                    i++;
+            else{
+                int i=len(tip);
+                int key = GetCharPressed();
+                while (key > 0)
+                {
+                    if ((key >= 32) && (key <= 125) && (i < MAX_INPUT_CHARS)){
+                        tip[i] = (char)key;
+                        tip[i+1] = '\0'; 
+                        i++;
+                    }
+                    key = GetCharPressed();
                 }
-                key = GetCharPressed();
-            }
-            if (IsKeyPressed(KEY_BACKSPACE))
-            {
-                i--;
-                if (i < 0) i = 0;
-                tip[i] = '\0';
+                if (IsKeyPressed(KEY_BACKSPACE))
+                {
+                    i--;
+                    if (i < 0) i = 0;
+                    tip[i] = '\0';
+                }
             }
         }
         
@@ -200,22 +208,24 @@ int main(){
                     ured(&racuni_poc, &racuni_kraj, atoi(broj), tip);
                 broj[0] = tip[0] = 0;
             }
-            int i=len(broj);
-            int key = GetCharPressed();
-            while (key > 0)
-            {
-                if ((key >= 48) && (key <= 57) && (i < MAX_INPUT_CHARS)){
-                    broj[i] = (char)key;
-                    broj[i+1] = '\0'; 
-                    i++;
+            else{
+                int i=len(broj);
+                int key = GetCharPressed();
+                while (key > 0)
+                {
+                    if ((key >= 48) && (key <= 57) && (i < MAX_INPUT_CHARS)){
+                        broj[i] = (char)key;
+                        broj[i+1] = '\0'; 
+                        i++;
+                    }
+                    key = GetCharPressed();
                 }
-                key = GetCharPressed();
-            }
-            if (IsKeyPressed(KEY_BACKSPACE))
-            {
-                i--;
-                if (i < 0) i = 0;
-                broj[i] = '\0';
+                if (IsKeyPressed(KEY_BACKSPACE))
+                {
+                    i--;
+                    if (i < 0) i = 0;
+                    broj[i] = '\0';
+                }
             }
         }
         else if(dodaj_stanje == 1){
@@ -228,22 +238,24 @@ int main(){
                 
                 broj[0] = 0;
             }
-            int i=len(broj);
-            int key = GetCharPressed();
-            while (key > 0)
-            {
-                if ((key >= 48) && (key <= 57) && (i < MAX_INPUT_CHARS)){
-                    broj[i] = (char)key;
-                    broj[i+1] = '\0'; 
-                    i++;
+            else{
+                int i=len(broj);
+                int key = GetCharPressed();
+                while (key > 0)
+                {
+                    if ((key >= 48) && (key <= 57) && (i < MAX_INPUT_CHARS)){
+                        broj[i] = (char)key;
+                        broj[i+1] = '\0'; 
+                        i++;
+                    }
+                    key = GetCharPressed();
                 }
-                key = GetCharPressed();
-            }
-            if (IsKeyPressed(KEY_BACKSPACE))
-            {
-                i--;
-                if (i < 0) i = 0;
-                broj[i] = '\0';
+                if (IsKeyPressed(KEY_BACKSPACE))
+                {
+                    i--;
+                    if (i < 0) i = 0;
+                    broj[i] = '\0';
+                }
             }
         }
         else if(plati_racune == 1){
@@ -318,12 +330,12 @@ int main(){
                     DrawText(TextFormat("%s\n", broj), 60, 60, 30, WHITE);
                 }
                 else if(plati_racune == 1){
-                    if(racuni_kraj != NULL || racuni_poc != NULL){
-                        
-                        while(racuni_kraj->iznos <= kor.stanje && racuni_kraj != NULL && racuni_poc != NULL){
-                            kor.stanje -= racuni_kraj->iznos;
+                    if(racuni_kraj != NULL && racuni_poc != NULL){
+
+                        while(racuni_poc != NULL && racuni_kraj != NULL && racuni_poc->iznos <= kor.stanje){
+                            kor.stanje -= racuni_poc->iznos;
                             suma += racuni_kraj->iznos;
-                            izreda(&racuni_poc);
+                            naplaceni = izreda(&racuni_poc, naplaceni);
                         }
                     }
                     DrawText("Svi moguci racuni su placeni.\n", 30, 30, 30, WHITE);
