@@ -334,7 +334,7 @@ int main(){
 
                         while(racuni_poc != NULL && racuni_kraj != NULL && racuni_poc->iznos <= kor.stanje){
                             kor.stanje -= racuni_poc->iznos;
-                            suma += racuni_kraj->iznos;
+                            suma += racuni_poc->iznos;
                             naplaceni = izreda(&racuni_poc, naplaceni);
                         }
                     }
